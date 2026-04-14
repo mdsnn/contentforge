@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ContentForge — AI Writer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0d0d0d;
+    --paper: #f5f0e8;
+    --cream: #ede8dc;
+    --rust: #c94a2a;
+    --rust-dark: #a33820;
+    --gold: #d4a843;
+    --muted: #7a7060;
+    --border: #d4cfc4;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    background-image: 
+      radial-gradient(circle at 20% 50%, rgba(201,74,42,0.04) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(212,168,67,0.06) 0%, transparent 40%);
+  }
+
+  /* Decorative lines */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--rust) 0%, var(--gold) 50%, var(--rust) 100%);
+    z-index: 100;
+  }
+
+  header {
+    padding: 3rem 2rem 2rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+
+  .logo-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--rust);
+    margin-bottom: 0.75rem;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--rust);
+  }
+
+  .subtitle {
+    margin-top: 0.75rem;
+    color: var(--muted);
+    font-weight: 300;
+    font-size: 1rem;
+  }
+
+  .groq-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 1rem;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    padding: 0.3rem 0.7rem;
+    border-radius: 2px;
+  }
+
+  .groq-badge span { color: var(--gold); }
+
+  /* Main layout */
+  .workspace {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem;
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 2rem;
+    align-items: start;
+  }
+
+  /* Panel */
+  .panel {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 4px 4px 0px var(--border);
+  }
+
+  .panel-header {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 0.9rem 1.25rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .panel-body { padding: 1.5rem; }
+
+  /* Form elements */
+  .field { margin-bottom: 1.25rem; }
+
+  label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+
+  input[type="text"],
+  input[type="password"],
+  select,
+  textarea {
+    width: 100%;
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.65rem 0.85rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    color: var(--ink);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    appearance: none;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--rust);
+    box-shadow: 0 0 0 3px rgba(201,74,42,0.1);
+  }
+
+  textarea { resize: vertical; min-height: 80px; }
+
+  /* Content type grid */
+  .type-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .type-btn {
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.6rem 0.5rem;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    color: var(--ink);
+    transition: all 0.15s;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+  }
+
+  .type-btn .type-emoji { font-size: 1.2rem; }
+
+  .type-btn:hover { border-color: var(--rust); background: rgba(201,74,42,0.04); }
+
+  .type-btn.active {
+    background: var(--rust);
+    border-color: var(--rust);
+    color: white;
+  }
+
+  /* Tone pills */
+  .tone-pills { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+  .tone-pill {
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--ink);
+  }
+
+  .tone-pill:hover { border-color: var(--rust); }
+  .tone-pill.active { background: var(--rust); border-color: var(--rust); color: white; }
+
+  /* API key field */
+  .key-wrapper { position: relative; }
+  .key-wrapper input { font-family: 'DM Mono', monospace; font-size: 0.8rem; padding-right: 3rem; }
+  .toggle-key {
+    position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer; color: var(--muted); font-size: 0.8rem;
+  }
+
+  /* Generate button */
+  .btn-generate {
+    width: 100%;
+    background: var(--rust);
+    color: white;
+    border: none;
+    padding: 0.9rem;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-style: italic;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.2s;
+    margin-top: 0.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-generate:hover { background: var(--rust-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(201,74,42,0.3); }
+  .btn-generate:active { transform: translateY(0); }
+  .btn-generate:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  .btn-generate .spinner {
+    display: none;
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .btn-generate.loading .btn-text { display: none; }
+  .btn-generate.loading .spinner { display: block; }
+
+  /* Output panel */
+  .output-panel {
+    position: sticky;
+    top: 1rem;
+  }
+
+  .output-empty {
+    padding: 4rem 2rem;
+    text-align: center;
+    color: var(--muted);
+  }
+
+  .output-empty .empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.4;
+  }
+
+  .output-empty p {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 1.1rem;
+  }
+
+  .output-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.25rem;
+    background: var(--cream);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .output-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--rust);
+    font-weight: 500;
+  }
+
+  .output-stats {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+  }
+
+  .output-content {
+    padding: 1.75rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.75;
+    color: var(--ink);
+    white-space: pre-wrap;
+    min-height: 300px;
+    max-height: 600px;
+    overflow-y: auto;
+  }
+
+  .output-content h1, .output-content h2, .output-content h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+  }
+
+  .output-actions {
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .btn-action {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.5rem 1rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+
+  .btn-action:hover { border-color: var(--rust); color: var(--rust); }
+
+  /* Error */
+  .error-msg {
+    padding: 1rem 1.25rem;
+    background: rgba(201,74,42,0.08);
+    border-left: 3px solid var(--rust);
+    color: var(--rust);
+    font-size: 0.85rem;
+    margin: 1rem;
+    border-radius: 0 3px 3px 0;
+  }
+
+  /* Fade in animation */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .output-content { animation: fadeUp 0.4s ease; }
+
+  @media (max-width: 768px) {
+    .workspace { grid-template-columns: 1fr; }
+    .output-panel { position: static; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-eyebrow">⚡ Powered by Groq</div>
+  <h1>Content<em>Forge</em></h1>
+  <p class="subtitle">AI-powered writing at lightning speed</p>
+  <div class="groq-badge">groq · <span>llama · gemma</span> · fast inference</div>
+</header>
+
+<div class="workspace">
+
+  <!-- Left: Controls -->
+  <div>
+    <div class="panel">
+      <div class="panel-header">// Configuration</div>
+      <div class="panel-body">
+
+        <div class="field">
+          <label>Groq API Key</label>
+          <div class="key-wrapper">
+            <input type="password" id="apiKey" placeholder="gsk_..." autocomplete="off">
+            <button class="toggle-key" onclick="toggleKey()" title="Show/Hide">👁</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Model</label>
+          <select id="modelSelect">
+            {% for value, name in models %}
+            <option value="{{ value }}">{{ name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+      </div>
+    </div>
+
+    <br>
+
+    <div class="panel">
+      <div class="panel-header">// Content Settings</div>
+      <div class="panel-body">
+
+        <div class="field">
+          <label>Content Type</label>
+          <div class="type-grid">
+            {% for key, ct in content_types.items %}
+            <button class="type-btn {% if forloop.first %}active{% endif %}" 
+                    data-type="{{ key }}" onclick="selectType('{{ key }}', this)">
+              <span class="type-emoji">{{ ct.emoji }}</span>
+              {{ ct.label }}
+            </button>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Tone</label>
+          <div class="tone-pills">
+            {% for tone in tones %}
+            <button class="tone-pill {% if forloop.first %}active{% endif %}"
+                    data-tone="{{ tone }}" onclick="selectTone('{{ tone }}', this)">{{ tone }}</button>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Your Topic / Prompt</label>
+          <textarea id="topicInput" placeholder="e.g. a lone astronaut who discovers an ancient library on Mars..."></textarea>
+        </div>
+
+        <button class="btn-generate" id="generateBtn" onclick="generate()">
+          <span class="btn-text">✦ Generate Content</span>
+          <div class="spinner"></div>
+        </button>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Output -->
+  <div class="output-panel">
+    <div class="panel" id="outputPanel">
+      <div class="panel-header">// Output</div>
+      <div id="outputBody">
+        <div class="output-empty">
+          <div class="empty-icon">✦</div>
+          <p>Your generated content will appear here...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  {% autoescape off %}
+  const CSRF_TOKEN = '{{ csrf_token }}';
+  {% endautoescape %}
+
+  let selectedType = '{{ content_types.keys|first }}';
+  let selectedTone = '{{ tones.0 }}';
+
+  function selectType(type, el) {
+    selectedType = type;
+    document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function selectTone(tone, el) {
+    selectedTone = tone;
+    document.querySelectorAll('.tone-pill').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function toggleKey() {
+    const k = document.getElementById('apiKey');
+    k.type = k.type === 'password' ? 'text' : 'password';
+  }
+
+  async function generate() {
+    const btn = document.getElementById('generateBtn');
+    const topic = document.getElementById('topicInput').value.trim();
+    const apiKey = document.getElementById('apiKey').value.trim();
+    const model = document.getElementById('modelSelect').value;
+
+    if (!topic || !apiKey) {
+      showError(!topic ? 'Please enter a topic.' : 'Please enter your Groq API key.');
+      return;
+    }
+
+    btn.classList.add('loading');
+    btn.disabled = true;
+
+    try {
+      const res = await fetch('/generate/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': CSRF_TOKEN,
+        },
+        body: JSON.stringify({ topic, content_type: selectedType, tone: selectedTone, model, api_key: apiKey }),
+      });
+
+      const data = await res.json();
+
+      if (data.error) {
+        showError(data.error);
+      } else {
+        showOutput(data);
+      }
+    } catch (e) {
+      showError('Network error. Is the server running?');
+    } finally {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+  }
+
+  function showOutput(data) {
+    const body = document.getElementById('outputBody');
+    body.innerHTML = `
+      <div class="output-meta">
+        <span class="output-tag">${data.emoji} ${data.content_type}</span>
+        <span class="output-stats">${data.model.split('-').slice(0,3).join('-')} · ${data.tokens ?? '—'} tokens</span>
+      </div>
+      <div class="output-content" id="outputText">${escapeHtml(data.content).replace(/^#\s(.+)/m, '<h2>$1</h2>')}</div>
+      <div class="output-actions">
+        <button class="btn-action" onclick="copyOutput()">Copy</button>
+        <button class="btn-action" onclick="downloadOutput()">Download .txt</button>
+      </div>
+    `;
+  }
+
+  function showError(msg) {
+    const body = document.getElementById('outputBody');
+    body.innerHTML = `<div class="error-msg">⚠ ${escapeHtml(msg)}</div>`;
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function copyOutput() {
+    const el = document.getElementById('outputText');
+    if (el) navigator.clipboard.writeText(el.innerText);
+  }
+
+  function downloadOutput() {
+    const el = document.getElementById('outputText');
+    if (!el) return;
+    const blob = new Blob([el.innerText], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'content-forge-output.txt';
+    a.click();
+  }
+
+  // Allow Ctrl+Enter to generate
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generate();
+  });
+</script>
+
+</body>
+</html>
